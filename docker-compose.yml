@@ -6,7 +6,7 @@ services:
     ports:
       - 3000:3000
   postgres:
-    image: postgres:12-alpine
+    image: postgres:17-alpine
     environment:
       POSTGRES_PASSWORD: $PGPASSWORD
     ports:
