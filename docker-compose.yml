@@ -1,11 +1,18 @@
 version: '3.2'
 services:
+  web:
+    build: .
+    env_file: '.env'
+    ports:
+      - 3000:3000
   postgres:
     image: postgres:12-alpine
     environment:
       POSTGRES_PASSWORD: $PGPASSWORD
     ports:
       - 5432:5432
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
   db_seeder:
     image: andywer/plow:1.1.0
     depends_on:
