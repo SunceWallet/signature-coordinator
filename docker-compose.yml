@@ -13,13 +13,3 @@ services:
       - 5432:5432
     volumes:
       - ./postgres-data:/var/lib/postgresql/data
-  db_seeder:
-    image: andywer/plow:1.1.0
-    depends_on:
-      - postgres
-    env_file: ./.env
-    environment:
-      PGHOST: postgres
-    restart: "no"
-    volumes:
-      - ./migrations:/migrations
