@@ -1,5 +1,5 @@
-ARG BUILDER=node:10-alpine
-ARG RUNNER=node:10-alpine
+ARG BUILDER=node:20-alpine
+ARG RUNNER=node:20-alpine
 
 ## Builder
 FROM $BUILDER as builder
