@@ -8,12 +8,13 @@ import UUID from "uuid"
 import config from "../config"
 import { transaction } from "../database"
 import { notifyNewSignatureRequest } from "../notifications"
-import { getAllSigners, getAllSources, getHorizon, hasSufficientSignatures } from "../lib/stellar"
+import { getAllSigners, getAllSources, getHorizon, signatureIsSufficient } from "../lib/stellar"
 import { saveSigner, Signer } from "../models/signer"
 import { saveSignature } from "../models/signature"
 import { createSignatureRequest, serializeSignatureRequest } from "../models/signature-request"
 import { saveSourceAccount } from "../models/source-account"
 import { serializeSigner } from "./query"
+import { getAccountTransactionThreshold } from "../lib/threshold"
 
 const dedupe = <T>(array: T[]): T[] => Array.from(new Set(array))
 
@@ -77,7 +78,7 @@ export async function handleTransactionCreation(
     )
   }
 
-  if (sourceAccounts.every(account => hasSufficientSignatures(account, tx.signatures))) {
+  if (await signatureIsSufficient(sourceAccounts, tx, signaturePubKey)) {
     throw HttpError(400, "Transaction is already sufficiently signed.")
   }
 
@@ -102,10 +103,11 @@ export async function handleTransactionCreation(
 
     await Promise.all(
       sourceAccounts.map(sourceAccount => {
+        const accountThreshold = getAccountTransactionThreshold(sourceAccount, tx)
         return saveSourceAccount(client, {
           signature_request: signatureRequest.id,
           account_id: sourceAccount.id,
-          key_weight_threshold: sourceAccount.thresholds.high_threshold
+          key_weight_threshold: accountThreshold
         })
       })
     )
