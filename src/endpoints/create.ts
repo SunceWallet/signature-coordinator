@@ -81,9 +81,8 @@ export async function handleTransactionCreation(
     throw HttpError(400, "Transaction is already sufficiently signed.")
   }
 
-  if (!tx.timeBounds || !tx.timeBounds.maxTime) {
-    throw HttpError(400, `Transaction must have upper timebound set.`)
-  } else if (Number.parseInt(tx.timeBounds.maxTime, 10) * 1000 > Date.now() + ms(config.txMaxTtl)) {
+  let maxTime = Number.parseInt(tx?.timeBounds?.maxTime || '0', 10) * 1000 || Date.now() + ms(config.txMaxTtl)
+  if (maxTime - Date.now() + ms(config.txMaxTtl) < 15000) {
     throw HttpError(
       400,
       `Transaction times out too late. Only accepting transactions valid for max. ${config.txMaxTtl}.`
@@ -97,7 +96,7 @@ export async function handleTransactionCreation(
       req: uri.toString(),
       source_req: originalRequestURI,
       status: "pending",
-      expires_at: new Date(Number.parseInt(tx.timeBounds!.maxTime, 10) * 1000)
+      expires_at: new Date(maxTime)
     })
 
     await Promise.all(
