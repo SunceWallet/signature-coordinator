@@ -34,8 +34,8 @@ router.get("/accounts/:accountIDs/transactions", async context => {
   const { params, query, response, request } = context
 
   const accountIDs = params.accountIDs.split(",")
-  const cursor = query.cursor || undefined
-  const limit = query.limit ? Number.parseInt(query.limit, 10) : undefined
+  const cursor = (query.cursor as string) || undefined
+  const limit = query.limit ? Number.parseInt(query.limit as string, 10) : undefined
 
   if (request.get("Accept") && /text\/event-stream/.test(request.get("Accept"))) {
     streamSignatureRequests(context.req, context.res, accountIDs)

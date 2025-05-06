@@ -1,13 +1,13 @@
-import { AccountResponse, Horizon, Keypair, Networks, Server, Transaction, xdr } from "stellar-sdk"
+import { Horizon, Keypair, Networks, Transaction, xdr } from "@stellar/stellar-sdk"
 
 import { horizonServers } from "../config"
 import { getAccountTransactionThreshold } from "./threshold"
 
 const dedupe = <T>(array: T[]) => [...new Set(array)]
 
-const getSignerKey = (signer: Horizon.AccountSigner): string => signer.key
+const getSignerKey = (signer: Horizon.HorizonApi.AccountSigner): string => signer.key
 
-export function getHorizon(networkPassphrase: Networks): Server {
+export function getHorizon(networkPassphrase: Networks): Horizon.Server {
   switch (networkPassphrase) {
     case Networks.PUBLIC:
       return horizonServers.pubnet
@@ -27,7 +27,7 @@ export function getAllSources(tx: Transaction) {
   ])
 }
 
-export function getAllSigners(accounts: AccountResponse[]) {
+export function getAllSigners(accounts: Horizon.AccountResponse[]) {
   return accounts.reduce(
     (signers, sourceAccount) =>
       dedupe([
@@ -51,7 +51,7 @@ export function signatureMatchesPublicKey(
 }
 
 export function signatureIsSufficient(
-  sourceAccounts: AccountResponse[],
+  sourceAccounts: Horizon.AccountResponse[],
   transaction: Transaction,
   signaturePubKey: string
 ) {

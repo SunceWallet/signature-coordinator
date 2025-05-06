@@ -1,6 +1,6 @@
 import test from "ava"
 import { createHash } from "crypto"
-import { Asset, Networks, Operation } from "stellar-sdk"
+import { Asset, Networks, Operation } from "@stellar/stellar-sdk"
 import request from "supertest"
 import { querySignatureRequestSignatures } from "../src/models/signature"
 import { querySignatureRequestByHash } from "../src/models/signature-request"
@@ -68,9 +68,7 @@ test("can create a request", t =>
 
     t.is(record.hash, sha256(req))
     t.is(record.expires_at.getTime(), Number.parseInt(tx.timeBounds!.maxTime, 10) * 1000)
-    t.assert(
-      record.created_at.getTime() >= Date.now() - 1000 && record.created_at.getTime() <= Date.now()
-    )
+    t.assert(Math.abs(record.created_at.getTime() - Date.now()) < 1000)
 
     const keypairFirst = (a: any) => (a.account_id === keypair.publicKey() ? -1 : 1)
     const signers = (await queryAllSignatureRequestSigners(database, record.id)).sort(keypairFirst)

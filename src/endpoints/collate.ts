@@ -1,6 +1,6 @@
-import { parseStellarUri, TransactionStellarUri } from "@stellarguard/stellar-uri"
+import { parseStellarUri, TransactionStellarUri } from "@suncewallet/stellar-uri"
 import HttpError from "http-errors"
-import { Networks, Transaction, Utils } from "stellar-sdk"
+import { Networks, Transaction, WebAuth } from "@stellar/stellar-sdk"
 
 import { database } from "../database"
 import { hasSufficientSignatures } from "../lib/records"
@@ -53,7 +53,7 @@ export async function collateSignatures(signatureRequestHash: string, signedTxXD
   const signature = tx.signatures[0]
   const signerPubKey = signerAccountIDs.find(pubKey => signatureMatchesPublicKey(signature, pubKey))
 
-  if (!signerPubKey || !Utils.verifyTxSignedBy(tx, signerPubKey)) {
+  if (!signerPubKey || !WebAuth.verifyTxSignedBy(tx, signerPubKey)) {
     throw HttpError(
       400,
       `The signature on the transaction does not seem to belong to a valid signer.`

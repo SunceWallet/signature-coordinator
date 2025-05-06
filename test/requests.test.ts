@@ -1,5 +1,5 @@
 import test from "ava"
-import { Asset, Keypair, Networks, Operation, Transaction } from "stellar-sdk"
+import { Asset, Keypair, Networks, Operation, Transaction } from "@stellar/stellar-sdk"
 import request from "supertest"
 import { withApp } from "./_helpers/bootstrap"
 import { seedSignatureRequests, Pool } from "./_helpers/seed"

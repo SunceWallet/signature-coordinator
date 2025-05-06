@@ -1,6 +1,6 @@
-import { parseStellarUri, TransactionStellarUri } from "@stellarguard/stellar-uri"
+import { parseStellarUri, TransactionStellarUri } from "@suncewallet/stellar-uri"
 import { Pool } from "pg"
-import { AccountResponse, Transaction, Networks } from "stellar-sdk"
+import { Horizon, Transaction, Networks } from "@stellar/stellar-sdk"
 import { horizonServers } from "../../src/config"
 import { createSignatureRequest, SignatureRequest } from "../../src/models/signature-request"
 import { saveSignature } from "../../src/models/signature"
@@ -30,7 +30,7 @@ interface Seed {
 export function seedSignatureRequests(database: Pool, seeds: Seed[]) {
   return Promise.all(
     seeds.map(async seed => {
-      let sourceAccount: AccountResponse
+      let sourceAccount: Horizon.AccountResponse
       let uri: TransactionStellarUri
       let tx: Transaction
 

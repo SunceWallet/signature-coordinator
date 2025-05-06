@@ -1,8 +1,8 @@
-import { parseStellarUri, TransactionStellarUri } from "@stellarguard/stellar-uri"
+import { parseStellarUri, TransactionStellarUri } from "@suncewallet/stellar-uri"
 import { createHash } from "crypto"
 import HttpError from "http-errors"
 import ms from "ms"
-import { Keypair, Networks, Transaction } from "stellar-sdk"
+import { Horizon, Keypair, Networks, Transaction } from "@stellar/stellar-sdk"
 import UUID from "uuid"
 
 import config from "../config"
@@ -22,7 +22,7 @@ function parseTransactionXDR(base64XDR: string, network: Networks) {
   try {
     return new Transaction(base64XDR, network)
   } catch (error) {
-    throw HttpError(400, "Cannot parse transaction XDR: " + error.message)
+    throw HttpError(400, "Cannot parse transaction XDR: " + (error as Error).message)
   }
 }
 
@@ -52,7 +52,7 @@ export async function handleTransactionCreation(
   const network = (uri.networkPassphrase || Networks.PUBLIC) as Networks
   const tx = parseTransactionXDR(uri.xdr, network)
 
-  const sourceAccounts = await Promise.all(
+  const sourceAccounts: Horizon.AccountResponse[] = await Promise.all(
     getAllSources(tx).map(sourcePublicKey => getHorizon(network).loadAccount(sourcePublicKey))
   )
   const requiredSigners = getAllSigners(sourceAccounts)
@@ -82,8 +82,10 @@ export async function handleTransactionCreation(
     throw HttpError(400, "Transaction is already sufficiently signed.")
   }
 
-  let maxTime = Number.parseInt(tx?.timeBounds?.maxTime || '0', 10) * 1000 || Date.now() + ms(config.txMaxTtl)
-  if (maxTime - Date.now() + ms(config.txMaxTtl) < 15000) {
+  let maxTime: number =
+    Number.parseInt(tx?.timeBounds?.maxTime || "0", 10) * 1000 ||
+    Date.now() + ms(config.txMaxTtl as string)
+  if (maxTime - Date.now() + ms(config.txMaxTtl as string) < 15000) {
     throw HttpError(
       400,
       `Transaction times out too late. Only accepting transactions valid for max. ${config.txMaxTtl}.`
