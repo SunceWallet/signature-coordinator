@@ -1,5 +1,5 @@
 import { parseEnv } from "envfefe"
-import { boolean, defaultTo, isFailure, number, string } from "fefe"
+import { defaultTo, isFailure, parseBoolean, parseNumber, pipe, string } from "fefe"
 import { Keypair, Horizon } from "@stellar/stellar-sdk"
 
 export type Config = ReturnType<typeof getConfig>
@@ -13,8 +13,8 @@ function getConfig() {
     pguser: string(),
     horizon: string(),
     horizonTestnet: string(),
-    port: defaultTo(number(), 3000),
-    serveStellarToml: boolean(),
+    port: pipe(defaultTo(string(), "3000")).pipe(parseNumber()),
+    serveStellarToml: pipe(defaultTo(string(), "false")).pipe(parseBoolean()),
     signingSecretKey: string(),
     txMaxTtl: defaultTo(string(), "30d")
   })
