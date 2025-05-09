@@ -1,4 +1,4 @@
-import Koa from "koa"
+import Koa, { HttpError } from "koa"
 import CORS from "kcors"
 import url from "url"
 
@@ -9,7 +9,7 @@ const ErrorMiddleware = () => async (ctx: Koa.Context, next: () => Promise<any>)
   try {
     return await next()
   } catch (error) {
-    if (error.status && error.status >= 400 && error.status < 500) {
+    if (error instanceof HttpError && error.status && error.status >= 400 && error.status < 500) {
       const body: any = {
         error: error?.message || "Unknown error"
       }

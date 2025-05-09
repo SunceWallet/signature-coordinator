@@ -43,9 +43,13 @@ export async function connectToDatabase() {
       })
     ])
   } catch (error) {
-    throw new Error(
-      `Cannot connect to database ${config.pgdatabase}@${config.pghost}: ${error.message}`
-    )
+    if (error instanceof Error) {
+      throw new Error(
+        `Cannot connect to database ${config.pgdatabase}@${config.pghost}: ${error.message}`
+      )
+    } else {
+      throw error
+    }
   }
 }
 
