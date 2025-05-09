@@ -1,6 +1,6 @@
 import test from "ava"
 import { createHash } from "crypto"
-import { Asset, Keypair, Networks, Operation, Transaction } from "stellar-sdk"
+import { Asset, Keypair, Networks, Operation, Transaction } from "@stellar/stellar-sdk"
 import request from "supertest"
 import { withApp } from "./_helpers/bootstrap"
 import { seedSignatureRequests } from "./_helpers/seed"
@@ -26,6 +26,7 @@ const source = leaseTestAccount(kp =>
 const keypair = leaseTestAccount(kp => topup(kp.publicKey()))
 const randomCosigner = Keypair.random()
 
+console.log(randomCosigner.secret(), randomCosigner.publicKey())
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 function sha256(text: string): string {
@@ -93,28 +94,31 @@ test("can submit a sufficiently signed tx to testnet horizon", t =>
 
 test("can submit a sufficiently signed tx to pubnet horizon", t =>
   withApp(async ({ database, server }) => {
-    const [refundSource, refundDestination] = await Promise.all([
-      fundMainnetAccount(source, "3.0"),
-      fundMainnetAccount(destination, "2.0")
-    ])
-    await delay(500)
-
+    let refund
     try {
-      const multisigSetupTx = await createTransaction(Networks.PUBLIC, source, [
-        Operation.setOptions({
-          lowThreshold: 2,
-          medThreshold: 2,
-          highThreshold: 2,
-          masterWeight: 1,
-          signer: {
-            ed25519PublicKey: randomCosigner.publicKey(),
-            weight: 1
-          },
-          source: source.publicKey()
-        })
-      ])
-      await getHorizon(Networks.PUBLIC).submitTransaction(multisigSetupTx)
+      refund = await fundMainnetAccount([destination, source], ["2.0", "3.0"], [[], [randomCosigner]])
+      await delay(2500)
+    
+      const multisigSetupTx = await createTransaction(
+        Networks.PUBLIC,
+        source,
+        [
+          Operation.setOptions({
+            lowThreshold: 2,
+            medThreshold: 2,
+            highThreshold: 2,
+            masterWeight: 1,
+            signer: {
+              ed25519PublicKey: randomCosigner.publicKey(),
+              weight: 1
+            },
+            source: source.publicKey()
+          })
+        ]
+      )
 
+      await getHorizon(Networks.PUBLIC).submitTransaction(multisigSetupTx)
+      await delay(2500)
       const tx = await buildTransaction(Networks.PUBLIC, source.publicKey(), [
         Operation.payment({
           amount: "1.0",
@@ -165,7 +169,9 @@ test("can submit a sufficiently signed tx to pubnet horizon", t =>
       t.is(signatureRequest?.error, null)
       t.true(signatureRequest!.updated_at.getTime() > Date.now() - 1000)
     } finally {
-      await Promise.all([refundSource([randomCosigner]), refundDestination()])
+      if (refund) {
+        await refund()
+      }
     }
   }))
 

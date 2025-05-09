@@ -1,26 +1,25 @@
-import { TransactionStellarUri } from "@stellarguard/stellar-uri"
+import { TransactionStellarUri } from "@suncewallet/stellar-uri"
 import axios from "axios"
 import qs from "qs"
 import {
-  AccountResponse,
   Keypair,
   Networks,
   Operation,
-  Server,
+  Horizon,
   SignerOptions,
   Transaction,
   TransactionBuilder,
   xdr
-} from "stellar-sdk"
+} from "@stellar/stellar-sdk"
 import config from "../../src/config"
 import testingConfig from "./config"
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
-export function getHorizon(network: Networks): Server {
+export function getHorizon(network: Networks): Horizon.Server {
   return network === Networks.PUBLIC
-    ? new Server(config.horizon)
-    : new Server(config.horizonTestnet)
+    ? new Horizon.Server(config.horizon)
+    : new Horizon.Server(config.horizonTestnet)
 }
 
 type AccountInitializer = (keypair: Keypair) => any
@@ -52,8 +51,7 @@ export async function initializeTestAccounts() {
 }
 
 export async function topup(accountID: string) {
-  const horizonURL = String(getHorizon(Networks.TESTNET).serverURL)
-  await axios.get(`${horizonURL}/friendbot?addr=${accountID}`)
+  await axios.get(`https://friendbot.stellar.org/?addr=${accountID}`)
   // Wait a little bit, so the horizon can catch-up, in case the friendbot used a different horizon
   await delay(750)
 }
@@ -95,7 +93,7 @@ export async function buildTransaction(
     options.timebounds.minTime = 0
   }
 
-  const horizon = new Server(network === Networks.PUBLIC ? config.horizon : config.horizonTestnet)
+  const horizon = new Horizon.Server(network === Networks.PUBLIC ? config.horizon : config.horizonTestnet)
   const account = await horizon.loadAccount(accountID)
   const txBuilder = new TransactionBuilder(account, {
     fee: "100",
@@ -125,16 +123,21 @@ export async function createTransaction(
   network: Networks,
   accountKeypair: Keypair,
   operations: xdr.Operation<any>[],
-  account?: AccountResponse
+  account?: Horizon.AccountResponse
 ) {
   account = account || (await getHorizon(network).loadAccount(accountKeypair.publicKey()))
-  const txBuilder = new TransactionBuilder(account, { fee: "100", networkPassphrase: network })
+  const fee = await getHorizon(network).fetchBaseFee()
+  const timebounds = await getHorizon(network).fetchTimebounds(240)
+  const txBuilder = new TransactionBuilder(account, { 
+    fee: String(fee), 
+    timebounds,
+    networkPassphrase: network
+  })
 
   for (const operation of operations) {
     txBuilder.addOperation(operation)
   }
 
-  txBuilder.setTimeout(60)
   const tx = txBuilder.build()
 
   tx.sign(accountKeypair)
@@ -162,10 +165,10 @@ export function cosignSignatureRequest(
   }
 }
 
-let pubnetFundingAccount: AccountResponse | undefined
-let pubnetFundingAccountFetch: Promise<AccountResponse> | undefined
+let pubnetFundingAccount: Horizon.AccountResponse | undefined
+let pubnetFundingAccountFetch: Promise<Horizon.AccountResponse> | undefined
 
-export async function fundMainnetAccount(destinationKeypair: Keypair, amount: string) {
+export async function fundMainnetAccount(destinationKeypairs: Keypair[], amounts: string[], cosigners: Keypair[][] = []) {
   if (!pubnetFundingAccountFetch) {
     pubnetFundingAccountFetch = getHorizon(Networks.PUBLIC).loadAccount(
       testingConfig.pubnetFundingKeypair.publicKey()
@@ -178,29 +181,42 @@ export async function fundMainnetAccount(destinationKeypair: Keypair, amount: st
   const fundingTx = await createTransaction(
     Networks.PUBLIC,
     testingConfig.pubnetFundingKeypair,
-    [
+    destinationKeypairs.map((destinationKeypair, i) =>
       Operation.createAccount({
         destination: destinationKeypair.publicKey(),
-        startingBalance: amount
+        startingBalance: amounts[i]
       })
-    ],
+    ),
     pubnetFundingAccount
   )
+  
+  destinationKeypairs.forEach(destinationKeypair => {
+    console.log(destinationKeypair.secret(), destinationKeypair.publicKey())
+  })
 
-  const pubnetHorizon = new Server(config.horizon)
+  const pubnetHorizon = new Horizon.Server(config.horizon)
   await pubnetHorizon.submitTransaction(fundingTx)
-
-  return async function refund(cosigners: Keypair[] = []) {
-    const refundTx = await createTransaction(Networks.PUBLIC, destinationKeypair, [
+  const refundTx = await createTransaction(
+    Networks.PUBLIC,
+    destinationKeypairs[0],
+    destinationKeypairs.map((destinationKeypair) =>
       Operation.accountMerge({
-        destination: testingConfig.pubnetFundingKeypair.publicKey()
+        destination: testingConfig.pubnetFundingKeypair.publicKey(),
+        source: destinationKeypair.publicKey(),
       })
-    ])
+    ),
+  )
 
-    for (const cosigner of cosigners) {
+  destinationKeypairs.map((destinationKeypair, i) => {
+    for (const cosigner of cosigners[i]) {
       refundTx.sign(cosigner)
     }
+    refundTx.sign(destinationKeypair)
+  })
 
+  console.log(refundTx.toXDR())
+
+  return async function refund() {
     await pubnetHorizon.submitTransaction(refundTx)
   }
 }

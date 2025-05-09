@@ -1,7 +1,7 @@
-import { parseStellarUri, TransactionStellarUri } from "@stellarguard/stellar-uri"
+import { parseStellarUri, TransactionStellarUri } from "@suncewallet/stellar-uri"
 import axios, { AxiosPromise } from "axios"
 import HttpError from "http-errors"
-import { Networks, Transaction } from "stellar-sdk"
+import { Networks, Transaction } from "@stellar/stellar-sdk"
 import { URL } from "url"
 
 import { database } from "../database"
@@ -11,6 +11,7 @@ import { querySignatureRequestSignatures } from "../models/signature"
 import {
   failSignatureRequest,
   querySignatureRequestByHash,
+  SignatureRequestError,
   updateSignatureRequestStatus
 } from "../models/signature-request"
 import { queryAllSignatureRequestSourceAccounts } from "../models/source-account"
@@ -113,7 +114,7 @@ export async function submitTransaction(signatureRequestHash: string) {
 
     return [response, submissionURL] as const
   } catch (error) {
-    await failSignatureRequest(database, signatureRequest.id, error)
+    await failSignatureRequest(database, signatureRequest.id, error as SignatureRequestError)
 
     const serialized = await serializeSignatureRequestAndSigners(signatureRequest)
     await notifySignatureRequestUpdate(serialized, signerAccountIDs)

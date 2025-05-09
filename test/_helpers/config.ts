@@ -1,6 +1,6 @@
 import * as dotenv from "dotenv"
 import * as path from "path"
-import { Keypair } from "stellar-sdk"
+import { Keypair } from "@stellar/stellar-sdk"
 
 function fail(message: string): never {
   throw Error(message)

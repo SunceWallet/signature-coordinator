@@ -1,4 +1,4 @@
-import { AccountResponse, Operation, OperationType, Transaction } from 'stellar-sdk';
+import { Horizon, Operation, OperationType, Transaction } from "@stellar/stellar-sdk";
 
 export type ThresholdLevel = 'low' | 'med' | 'high';
 
@@ -7,9 +7,9 @@ const thresholdMap: Record<OperationType, ThresholdLevel> = {
   payment: 'med',
   pathPaymentStrictReceive: 'med',
   pathPaymentStrictSend: 'med',
-  manageSellOffer: 'high',
-  manageBuyOffer: 'high',
-  createPassiveSellOffer: 'high',
+  manageSellOffer: 'med',
+  manageBuyOffer: 'med',
+  createPassiveSellOffer: 'med',
   setOptions: 'high',
   changeTrust: 'med',
   allowTrust: 'low',
@@ -18,17 +18,18 @@ const thresholdMap: Record<OperationType, ThresholdLevel> = {
   manageData: 'med',
   bumpSequence: 'low',
   createClaimableBalance: 'med',
-  claimClaimableBalance: 'med',
-  beginSponsoringFutureReserves: 'low',
-  endSponsoringFutureReserves: 'low',
-  revokeSponsorship: 'high',
-  // TODO: upgrade stellar sdk to latest version to support these operations
-  //clawback: 'high',
-  //clawbackClaimableBalance: 'high',
-  //setTrustLineFlags: 'high',
-  //invokeHostFunction: 'high', // if using Soroban
-  //extendFootprintTtl: 'low',  // if using Soroban
-  //restoreFootprint: 'low',    // if using Soroban
+  claimClaimableBalance: 'low',
+  beginSponsoringFutureReserves: 'med',
+  endSponsoringFutureReserves: 'med',
+  revokeSponsorship: 'med',
+  clawback: 'med',
+  clawbackClaimableBalance: 'med',
+  setTrustLineFlags: 'low',
+  invokeHostFunction: 'med',
+  extendFootprintTtl: 'med',
+  restoreFootprint: 'med',
+  liquidityPoolDeposit: 'med',
+  liquidityPoolWithdraw: 'med',
 };
 
 const thresholdValues: Record<ThresholdLevel, number> = {
@@ -43,7 +44,7 @@ const reverseThresholdValues: Record<number, ThresholdLevel> = {
   3: 'high',
 };
 
-export function getAccountThreshold(account: AccountResponse, threshold: ThresholdLevel): number {
+export function getAccountThreshold(account: Horizon.AccountResponse, threshold: ThresholdLevel): number {
   switch (threshold) {
     case 'low':
       return account.thresholds.low_threshold
@@ -74,7 +75,7 @@ export function getRequiredThreshold(operations: Operation[]): ThresholdLevel {
   return reverseThresholdValues[maxThresholdValue] || 'high';
 }
 
-export function getAccountTransactionThreshold(sourceAccount: AccountResponse, transaction: Transaction): number {
+export function getAccountTransactionThreshold(sourceAccount: Horizon.AccountResponse, transaction: Transaction): number {
   const sourceAccountOps = transaction.operations.filter(op => !op.source || op.source === sourceAccount.account_id)
   const opsThreshold = getRequiredThreshold(sourceAccountOps)
   const accountThreshold = getAccountThreshold(sourceAccount, opsThreshold)

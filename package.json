@@ -49,9 +49,10 @@
   },
   "dependencies": {
     "@godaddy/terminus": "^2.4.1",
-    "@stellarguard/stellar-uri": "^1.0.0",
-    "axios": "^0.21.1",
-    "envfefe": "^1.2.0",
+    "@stellar/stellar-sdk": "^13.3.0",
+    "@suncewallet/stellar-uri": "^1.1.2",
+    "axios": "^1.9.0",
+    "envfefe": "^3.0.0",
     "http-errors": "^1.7.1",
     "http-event-stream": "^0.2.0",
     "kcors": "^2.2.2",
@@ -63,7 +64,6 @@
     "pg-listen": "^1.7.0",
     "postgres-migrations": "^5.1.1",
     "squid": "^0.5.1",
-    "stellar-sdk": "^8.0.0",
     "typed-emitter": "^0.1.0",
     "uuid": "^3.3.2"
   },
@@ -75,19 +75,19 @@
     "@types/kcors": "^2.2.3",
     "@types/koa": "^2.0.46",
     "@types/koa-router": "^7.0.30",
-    "@types/ms": "^0.7.31",
-    "@types/node": "^12.12.11",
+    "@types/ms": "^0.7.34",
+    "@types/node": "^12.20.55",
     "@types/pg": "^7.4.10",
     "@types/qs": "^6.5.1",
     "@types/supertest": "^2.0.4",
     "@types/uuid": "^3.4.4",
-    "ava": "^2.4.0",
+    "ava": "^6.3.0",
     "body-parser": "^1.19.0",
     "dotenv": "^6.0.0",
     "eventsource": "^1.0.7",
     "get-port": "^4.0.0",
     "husky": "^0.14.3",
-    "lint-staged": "^7.2.0",
+    "lint-staged": "^15.5.1",
     "prettier": "^1.19.1",
     "supertest": "^3.3.0",
     "tap-xunit": "^2.4.1",
@@ -95,6 +95,6 @@
     "ts-node-dev": "^1.0.0-pre.26",
     "tslint": "^5.11.0",
     "tslint-config-prettier": "^1.13.0",
-    "typescript": "^3.7.2"
+    "typescript": "^5.8.3"
   }
 }

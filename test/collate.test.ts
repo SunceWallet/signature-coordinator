@@ -1,6 +1,6 @@
 import test from "ava"
 import { createHash } from "crypto"
-import { Asset, Keypair, Networks, Operation } from "stellar-sdk"
+import { Asset, Keypair, Networks, Operation } from "@stellar/stellar-sdk"
 import request from "supertest"
 import { querySignatureRequestSignatures } from "../src/models/signature"
 import { querySignatureRequestByHash } from "../src/models/signature-request"
